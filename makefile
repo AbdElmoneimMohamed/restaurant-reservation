@@ -2,11 +2,11 @@ BIN = ./vendor/bin
 SAIL = $(BIN)/sail
 
 # Docker --------------------------------------------------------------------- #
-up:
+start:
 	$(SAIL) up -d
 
-sh:
-	docker exec -it restaurant-reservation-laravel.test-1 bash
+stop:
+	$(SAIL) up -d
 
 down:
 	$(SAIL) down
@@ -16,6 +16,9 @@ rebuild:
 	$(SAIL) build --no-cache;
 	make restart;
 
+sh:
+	docker exec -it restaurant-reservation-laravel.test-1 bash
+
 restart:
 	make down; make up;
 
@@ -23,7 +26,7 @@ restart:
 local-setup:
 	cp .env.example .env
 	composer install;
-	make up;
+	make start;
 	$(SAIL) artisan key:generate;
 	$(SAIL) artisan storage:link;
 	make migrate;
