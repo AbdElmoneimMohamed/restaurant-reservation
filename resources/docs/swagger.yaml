@@ -1,0 +1,416 @@
+openapi: 3.0.0
+info:
+  title: Restaurant Reservation API
+  description: API for managing restaurant reservations, orders, and payments.
+  version: 1.0.0
+servers:
+  - url: http://localhost/api
+    description: Local development server
+
+paths:
+  /register:
+    post:
+      summary: Register a new user
+      operationId: registerUser
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  example: Password123
+                password_confirmation:
+                  type: string
+                  example: Password123
+              required:
+                - name
+                - email
+                - password
+                - password_confirmation
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User registered successfully
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: John Doe
+                      email:
+                        type: string
+                        example: john.doe@example.com
+        '422':
+          description: Invalid request
+
+  /login:
+    post:
+      summary: Login a user
+      operationId: loginUser
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  example: Password123
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '401':
+          description: Invalid credentials
+
+  /check-availability:
+    get:
+      summary: Check table availability
+      operationId: checkAvailability
+      tags:
+        - Reservations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: customer_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: from_time
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+            example: 2024-08-10 17:00:00
+        - name: to_time
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+            example: 2024-08-10 19:00:00
+        - name: guests
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 4
+      responses:
+        '200':
+          description: Availability checked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available_tables:
+                    type: array
+                    items:
+                      type: integer
+                      example: 1
+        '400':
+          description: Invalid request
+
+  /reserve-table:
+    post:
+      summary: Reserve a table
+      operationId: reserveTable
+      tags:
+        - Reservations
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                table_id:
+                  type: integer
+                  example: 1
+                customer_id:
+                  type: integer
+                  example: 1
+                from_time:
+                  type: string
+                  format: date-time
+                  example: 2024-08-10 19:00:00
+                to_time:
+                  type: string
+                  format: date-time
+                  example: 2024-08-10 21:00:00
+              required:
+                - table_id
+                - customer_id
+                - from_time
+                - to_time
+      responses:
+        '201':
+          description: Table reserved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservation:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      table_id:
+                        type: integer
+                        example: 1
+                      customer_id:
+                        type: integer
+                        example: 1
+                      from_time:
+                        type: string
+                        format: date-time
+                        example: 2024-08-10 19:00:00
+                      to_time:
+                        type: string
+                        format: date-time
+                        example: 2024-08-10 21:00:00
+        '400':
+          description: Invalid request
+
+  /menu:
+    get:
+      summary: List all menu items
+      operationId: listMenuItems
+      tags:
+        - Menu
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Menu items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  menu_items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: Spaghetti
+                        price:
+                          type: number
+                          format: float
+                          example: 12.99
+                        description:
+                          type: string
+                          example: Delicious spaghetti with tomato sauce
+                        available_quantity:
+                          type: integer
+                          example: 50
+                        discount:
+                          type: number
+                          format: float
+                          example: 0.10
+        '400':
+          description: Invalid request
+
+  /order:
+    post:
+      summary: Place an order
+      operationId: placeOrder
+      tags:
+        - Orders
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                table_id:
+                  type: integer
+                  example: 1
+                reservation_id:
+                  type: integer
+                  example: 1
+                customer_id:
+                  type: integer
+                  example: 1
+                user_id:
+                  type: integer
+                  example: 1
+                meals:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      meal_id:
+                        type: integer
+                        example: 1
+                      quantity:
+                        type: number
+                        format: integer
+                        example: 1
+
+      responses:
+        '201':
+          description: Order placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      table_id:
+                        type: integer
+                        example: 1
+                      reservation_id:
+                        type: integer
+                        example: 1
+                      customer_id:
+                        type: integer
+                        example: 1
+                      user_id:
+                        type: integer
+                        example: 1
+                      total:
+                        type: number
+                        format: float
+                        example: 50.00
+                      paid:
+                        type: boolean
+                        example: false
+                      order_details:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            meal_id:
+                              type: integer
+                              example: 1
+                            amount_to_pay:
+                              type: number
+                              format: float
+                              example: 12.99
+        '400':
+          description: Invalid request
+
+  /checkout:
+    post:
+      summary: Checkout and print invoice
+      operationId: checkout
+      tags:
+        - Payments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id:
+                  type: integer
+                  example: 1
+                checkout_type:
+                  type: string
+                  example: tax_and_service
+                  enum: [tax_and_service, service_only]
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice:
+                    type: object
+                    properties:
+                      orderId:
+                        type: integer
+                        example: 1
+                      total:
+                        type: number
+                        format: float
+                        example: 50.00
+                      tax:
+                        type: number
+                        format: float
+                        example: 7.00
+                      service:
+                        type: number
+                        format: float
+                        example: 10.00
+                      finalTotal:
+                        type: number
+                        format: float
+                        example: 67.00
+        '400':
+          description: Invalid request
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
